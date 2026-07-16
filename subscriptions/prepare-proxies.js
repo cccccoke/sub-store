@@ -1,5 +1,9 @@
 /**
- * Sub-Store subscription operator: add source identity and shared defaults.
+ * Sub-Store subscription operator: preserve the subscription identity in names.
+ *
+ * Protocol options and benchmark settings intentionally remain untouched. They
+ * belong to the provider or the final Stash configuration, not this generic
+ * preprocessing stage.
  */
 async function operator(proxies = [], targetPlatform, context) {
   return proxies.map(proxy => {
@@ -14,9 +18,6 @@ async function operator(proxies = [], targetPlatform, context) {
     if (!proxy.name.startsWith(prefix)) {
       proxy.name = prefix + proxy.name;
     }
-
-    proxy.ecn = true;
-    proxy['test-url'] = 'http://1.0.0.1/generate_204';
 
     return proxy;
   });

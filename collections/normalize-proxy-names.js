@@ -2,13 +2,13 @@
  * Sub-Store collection operator: normalize names for the Stash generator.
  *
  * OUTPUT:
- * ADDRESS-REGION-PROTOCOL-[F|SP]-[V6]-SERIAL
+ * ADDRESS-REGION-PROTOCOL-[F|SP]-[V6]-STABLE_ID
  *
  * EXAMPLES:
- * KTM-HK-VLESS-F-01
- * KTM-HK-SS-SP-01
- * KTM-HK-HY2-01
- * KTM-TW-SS-V6-01
+ * KTM-HK-VLESS-F-0123456789
+ * KTM-HK-SS-SP-1234567890
+ * KTM-HK-HY2-2345678901
+ * KTM-TW-SS-V6-3456789012
  */
 async function operator(proxies = [], targetPlatform, context = {}) {
   const CONFIG = {
@@ -21,7 +21,7 @@ async function operator(proxies = [], targetPlatform, context = {}) {
     unknownAddress: 'SUBSCRIPTION',
     unknownRegion: 'NONE',
     unknownProtocol: 'UNK',
-    serialWidth: 2,
+    stableIdWidth: 10,
   };
 
   const INFO_RE =
@@ -38,6 +38,11 @@ async function operator(proxies = [], targetPlatform, context = {}) {
   // IPV6 IS ALSO DETERMINED ONLY FROM THE ORIGINAL NODE NAME.
   const IPV6_RE =
     /(?:^|[^A-Z0-9])(?:IPV6|V6)(?=$|[^A-Z0-9])/i;
+
+  // Optional user-owned identity. Example: [ID:AI-US-PRIMARY]. The marker is
+  // hashed before it enters the public node name, so the label is not exposed.
+  const STABLE_ID_RE =
+    /\[(?:ID|SID)\s*[:=]\s*([A-Z0-9._-]{1,64})\]/i;
 
   // KEEP PROTOCOL NAMES UPPERCASE AND DO NOT OMIT THE PROTOCOL FIELD.
   const TYPE_ALIASES = {
@@ -211,6 +216,50 @@ async function operator(proxies = [], targetPlatform, context = {}) {
     return '';
   }
 
+  function getNestedValue(value, ...keys) {
+    let current = value;
+    for (const key of keys) {
+      if (!current || typeof current !== 'object') return '';
+      current = current[key];
+    }
+    return clean(current);
+  }
+
+  function getStableIdentity(proxy, nodeName) {
+    const explicitId = nodeName.match(STABLE_ID_RE)?.[1];
+    if (explicitId) return `explicit:${explicitId.toUpperCase()}`;
+
+    const endpointIdentity = [
+      clean(proxy.type).toLowerCase(),
+      clean(proxy.server).toLowerCase(),
+      clean(proxy.port),
+      clean(proxy.network).toLowerCase(),
+      clean(proxy.sni || proxy.servername || proxy['server-name']).toLowerCase(),
+      getNestedValue(proxy, 'reality-opts', 'public-key'),
+      getNestedValue(proxy, 'reality-opts', 'short-id'),
+      clean(proxy.plugin).toLowerCase(),
+      getNestedValue(proxy, 'plugin-opts', 'host').toLowerCase(),
+      clean(proxy.obfs).toLowerCase(),
+      clean(proxy['obfs-password']),
+    ].join('\u0000');
+
+    // Non-standard proxy types may not expose server/port in the usual fields.
+    // Their original name is the safest available deterministic fallback.
+    if (!clean(proxy.server) && !clean(proxy.port)) {
+      return `${endpointIdentity}\u0000name:${clean(nodeName)}`;
+    }
+    return endpointIdentity;
+  }
+
+  function stableNumericId(value) {
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return String(hash >>> 0).padStart(CONFIG.stableIdWidth, '0');
+  }
+
   const prepared = proxies.map(proxy => {
     const { address, nodeName } = splitAddress(proxy);
 
@@ -232,6 +281,7 @@ async function operator(proxies = [], targetPlatform, context = {}) {
       ),
       lineTag: getLineTag(nodeName),
       ipv6: IPV6_RE.test(nodeName),
+      identity: getStableIdentity(proxy, nodeName),
     };
   });
 
@@ -239,7 +289,7 @@ async function operator(proxies = [], targetPlatform, context = {}) {
     ? prepared.filter(item => !item.info)
     : prepared;
 
-  const counters = new Map();
+  const generatedNames = new Map();
 
   return kept.map(item => {
     // IF NOTICE NODES ARE RETAINED, THEY STILL RECEIVE VALID FIELDS.
@@ -253,25 +303,19 @@ async function operator(proxies = [], targetPlatform, context = {}) {
       );
       item.lineTag = '';
       item.ipv6 = false;
+      item.identity = getStableIdentity(item.proxy, item.proxy.name);
     }
 
-    const groupKey = [
+    const identityKey = [
       item.address,
       item.region,
       item.protocol,
       item.lineTag,
       item.ipv6 ? 'IPV6' : '',
+      item.identity,
     ].join('\u0000');
-
-    const serial = (counters.get(groupKey) || 0) + 1;
-    counters.set(groupKey, serial);
-
-    const serialText = String(serial).padStart(
-      CONFIG.serialWidth,
-      '0',
-    );
-
-    item.proxy.name = [
+    const stableId = stableNumericId(identityKey);
+    const normalizedName = [
       item.address,
       item.region,
       item.protocol,
@@ -279,8 +323,16 @@ async function operator(proxies = [], targetPlatform, context = {}) {
         ? [{ FIXED: 'F', SPECIALIZED: 'SP' }[item.lineTag]]
         : []),
       ...(item.ipv6 ? ['V6'] : []),
-      serialText,
+      stableId,
     ].join('-');
+
+    if (generatedNames.has(normalizedName)) {
+      throw new Error(
+        `节点稳定标识冲突: ${normalizedName}；请删除重复节点或给节点添加唯一的 [ID:...] 标记`,
+      );
+    }
+    generatedNames.set(normalizedName, item.identity);
+    item.proxy.name = normalizedName;
 
     return item.proxy;
   });

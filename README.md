@@ -1,29 +1,26 @@
 # Sub-Store → Stash Configuration Pipeline
 
-本仓库保存一组安装 Sub-Store 后自行维护的本地脚本，用来把多个原始代理订阅整理为一份可直接交给 Stash 使用的 YAML 配置。
+本仓库维护一套可公开托管的 Sub-Store 脚本与 Stash 基础配置。真实订阅地址、Token、UUID、密码、节点内容和最终私有配置不进入仓库。
 
-它不是 Sub-Store 或 Stash 的安装仓库，也不保存真实订阅地址、节点凭据或生成后的私有配置。除不参与流水线的脱敏结构样例外，仓库只维护“订阅处理 → 组合订阅处理 → Stash 文件生成与响应处理”这条流水线。
+当前设计把职责拆成三层：
 
-## Sub-Store、Stash 与本仓库的关系
-
-- **Sub-Store** 负责读取不同格式的订阅、转换节点、组合多个订阅，并通过脚本扩展处理过程。
-- **Stash** 是最终配置的消费者。它读取 YAML 中的节点、策略组和分流规则，并可从 HTTP 响应头读取套餐流量与到期时间。
-- **本仓库** 位于两者之间：先在 Sub-Store 内整理单订阅和组合订阅，再生成符合当前使用习惯的 Stash 配置。
+1. Sub-Store 组合订阅负责整理节点名称和聚合流量。
+2. Sub-Store File 使用官方“从订阅添加节点”操作，把组合订阅节点加入远程基础配置。
+3. Stash 通过 `rule-providers` 独立更新规则，不需要为了修改规则重新生成节点。
 
 ```mermaid
 flowchart LR
-  A[原始单订阅] --> B[prepare-proxies.js]
-  B --> C[组合订阅 Sub-Store]
+  A[原始订阅] --> B[prepare-proxies.js]
+  B --> C[组合订阅]
   C --> D[aggregate-subscription-usage.js]
   D --> E[normalize-proxy-names.js]
-  E --> F[generate-stash-config.js]
-  T[stash-base-config.yaml] --> F
-  D -. subscription-userinfo .-> R[set-stash-response-headers.js]
-  F --> R
-  R --> O[Stash YAML 响应]
+  R[远程 stash-base-config.yaml] --> F[Sub-Store File]
+  E -->|官方 从订阅添加节点| F
+  F --> G[generate-stash-config.js]
+  G --> H[set-stash-response-headers.js]
+  H --> I[Stash 配置 URL]
+  P[rules/*.yaml] -. Stash 后台更新 .-> I
 ```
-
-节点配置走实线；聚合后的流量信息通过 `subscription-userinfo` 响应头传递。
 
 ## 目录结构
 
@@ -39,159 +36,275 @@ flowchart LR
 │   ├── generate-stash-config.js
 │   ├── set-stash-response-headers.js
 │   └── stash-base-config.yaml
+├── rules/
+│   ├── ai.yaml
+│   ├── developer.yaml
+│   ├── developer-download.yaml
+│   ├── research.yaml
+│   ├── proxy.yaml
+│   └── direct.yaml
+├── tests/
+│   └── runtime-scripts.test.js
 ├── AGENTS.md
 ├── README.md
 └── Stash-SubStore-MEMORY.md
 ```
 
-| 文件 | 在 Sub-Store 中的位置 | 作用 |
+| 文件 | 挂载位置 | 作用 |
 | --- | --- | --- |
-| `subscriptions/prepare-proxies.js` | 单个订阅的脚本操作 | 添加订阅来源前缀，并统一 ECN 与测速地址 |
-| `collections/aggregate-subscription-usage.js` | 组合订阅的脚本操作 | 汇总多个订阅的流量与到期信息，不修改节点 |
-| `collections/normalize-proxy-names.js` | 组合订阅的脚本操作 | 删除提示节点，并生成稳定、可解析的节点名称 |
-| `files/example.yaml` | 不挂载 | 使用无效占位节点的脱敏 YAML 结构参考，不参与流水线，也不作为当前生成器输出的金标准 |
-| `files/stash-base-config.yaml` | 文件的基础内容 | 提供 Stash 模式、DNS 基线和分流规则 |
-| `files/generate-stash-config.js` | 文件脚本 | 读取组合订阅，注入节点并生成、校验策略组 |
-| `files/set-stash-response-headers.js` | 修改响应 / Response Transformer | 设置 YAML 下载响应头并转发聚合流量信息 |
-| `Stash-SubStore-MEMORY.md` | 不挂载 | 记录维护不变量、旧名称映射和已注明日期的历史运行背景 |
+| `subscriptions/prepare-proxies.js` | 每个单订阅的脚本操作 | 只添加订阅来源前缀，不覆盖协议或测速参数 |
+| `collections/aggregate-subscription-usage.js` | 组合订阅第一个脚本操作 | 严格聚合流量，始终原样返回节点 |
+| `collections/normalize-proxy-names.js` | 组合订阅第二个脚本操作 | 删除提示节点，生成可解析且不受订阅顺序影响的节点名 |
+| `files/stash-base-config.yaml` | File 的远程基础配置 | DNS、规则 provider、内联引导规则和最终兜底 |
+| `files/generate-stash-config.js` | 官方添加节点操作之后的文件脚本 | 直接读取 `$content.proxies`，生成并校验策略组 |
+| `files/set-stash-response-headers.js` | 修改响应 / Response Transformer | 设置 YAML 下载头，验证并保留 File 已取得的流量头 |
+| `rules/*.yaml` | Stash 远程规则集合 | 独立更新 AI、开发、下载、学术、代理与直连域名 |
+| `files/example.yaml` | 不挂载 | 脱敏结构样例，不是当前生成器的金标准 |
 
-## 各阶段行为
+## 节点处理
 
-### 1. 单订阅预处理
+### 单订阅预处理
 
-`prepare-proxies.js` 对每个节点执行三项处理：
+`prepare-proxies.js` 只给节点名添加订阅来源前缀。它不再固定写入 `ecn` 或 `test-url`：协议参数由订阅提供方负责，最终测速设置由 Stash 负责。
 
-1. 使用 `_subDisplayName` 或 `_subName` 给节点名添加订阅来源前缀；已经存在相同前缀时不会重复添加。
-2. 设置 `ecn: true`。
-3. 设置 `test-url: http://1.0.0.1/generate_204`。
+### 组合订阅脚本顺序
 
-来源前缀不仅用于辨识节点，也为组合订阅阶段提供后备来源信息：`normalize-proxy-names.js` 会优先读取 Sub-Store 元数据，元数据缺失时再从该前缀恢复订阅标识。
+必须保持：
 
-### 2. 组合订阅处理
+1. `collections/aggregate-subscription-usage.js`
+2. `collections/normalize-proxy-names.js`
 
-组合订阅中的脚本顺序应为：
+流量聚合默认是严格模式：任一应参与的订阅读取失败时，不发布不完整合计。可选参数仍为：
 
-1. `aggregate-subscription-usage.js`
-2. `normalize-proxy-names.js`
-
-流量聚合脚本默认采用严格模式：
-
-- 只统计有流量来源、尚未过期的订阅。
-- 任一应参与统计的订阅失败时，不发布不完整的合计。
-- 已用流量超过总量时按剩余流量为 0 处理，不让负余额抵扣其他套餐。
-- 新版 Sub-Store 优先把结果写入当前请求的响应上下文；旧版后端才回写组合订阅记录。
-- 始终原样返回节点数组，因此不会影响后续重命名。
-
-可选参数：
-
-| 参数 | 默认值 | 说明 |
+| 参数 | 默认 | 说明 |
 | --- | --- | --- |
-| `allow_partial=true` | `false` | 某些订阅流量读取失败时，仍发布成功部分的合计 |
-| `include_expired=true` | `false` | 把已过期订阅纳入合计，并保留最早到期时间 |
+| `allow_partial=true` | `false` | 允许发布成功来源的部分合计 |
+| `include_expired=true` | `false` | 把已过期订阅纳入合计 |
 
-节点重命名脚本输出以下格式：
+### 节点命名契约
+
+规范名称为：
 
 ```text
 SUBSCRIPTION-REGION-PROTOCOL-[F|SP]-[V6]-NN
 ```
 
-其中方括号字段是可选的：
-
-- `F`：固定 IP / 静态 / 独享线路。
-- `SP`：专线，例如 IEPL、IPLC、MPLS、CN2 等。
-- `V6`：IPv6 节点。
-- `NN`：同类节点内从 `01` 开始的序号。
+`NN` 现在是 10 位确定性数字标识，不再是输入顺序中的 `01、02`。默认根据订阅、地区、协议与节点端点生成；机场仅调整节点顺序不会改变名称。
 
 示例：
 
 ```text
-KTM-HK-VLESS-F-01
-KTM-HK-SS-SP-01
-KTM-HK-HY2-01
-KTM-TW-SS-V6-01
+KTM-HK-VLESS-0123456789
+KTM-HK-SS-SP-1234567890
+GLODOS-US-SS-F-2345678901
+MITCE-TW-HY2-V6-3456789012
 ```
 
-这个命名格式是文件生成器的输入契约。不要只修改重命名脚本而不同步 `generate-stash-config.js` 中的解析规则。
+标记语义：
 
-### 3. Stash 文件生成
+- `F`：原节点名明确声明固定、静态、独享或 dedicated IP。脚本只能识别声明，不能验证出口是否真的固定。
+- `SP`：名称明确包含 IEPL、IPLC、MPLS、CN2、CMI、AS9929 等专线标识。
+- `V6`：名称明确包含 IPv6/V6。
+- `NN`：确定性数字标识。
 
-`generate-stash-config.js` 以 `stash-base-config.yaml` 作为 `$content`，再通过 `produceArtifact` 生成名为 `Sub-Store` 的组合订阅，目标平台固定为 `Stash`。
+身份敏感节点建议在 Sub-Store 本地名称中增加用户自有标记：
 
-生成器会：
+```text
+US Fixed [ID:AI-US-PRIMARY]
+```
 
-- 注入并稳定排序 `proxies`。
-- 根据地区、协议、订阅来源、固定 IP、专线和 IPv6 生成分层策略组。
-- 生成 `Stable`、`Home Performance`、`AI Stable`、`Default Proxy`、`Research + AI`、`Developer` 等入口。
-- 把旧规则目标 `Auto` 迁移为 `Default Proxy`。
-- 校验空组、重名、无效引用、自引用、循环引用、规则目标和最后一条兜底规则。
-- 所有校验通过后才替换 `$content`，避免输出半成品。
+`[ID:...]` 会先被哈希，不会原样出现在最终公开格式中。只要订阅、地区、协议和线路标记不变，更换服务器端点也可保留相同规范名。相同分组内的重复 ID 会被拒绝。
 
-当前策略有两个明确前提：
+这次从顺序编号迁移到确定性编号会造成一次性节点名称变化，Stash 原先记住的具体节点选择需要重新确认一次。
 
-- `Stable` 至少需要一个 IPv4 VLESS/REALITY 节点或一个 IPv4 `SS-SP` 节点。
-- `AI Stable` 至少需要一个位于 US、JP 或 SG 的固定 IP、VLESS/REALITY 或 `SS-SP` 节点。
+## 在 Sub-Store 中组装 File
 
-不满足前提时生成器会主动报错，这是防止 Stash 把空策略组当作 `DIRECT` 的保护措施。
+### 内容设置
 
-### 4. 响应处理
+推荐选择：
 
-`set-stash-response-headers.js` 必须作为独立的“修改响应 / Response Transformer”使用，而不是普通文件脚本。它不会修改响应正文或状态，只负责：
+- 类型：`mihomo 配置`
+- 来源：`远程`
+- 模式：`作为 mihomo 配置`
+- 远程地址：
+
+```text
+https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
+```
+
+不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。
+
+### 文件操作顺序
+
+1. 添加官方操作“从订阅添加节点”。
+   - 选择已经执行完聚合和规范化脚本的组合订阅。
+   - 使用替换模式，避免基础模板或重复执行残留旧节点。
+2. 添加“脚本操作”，内容使用 `files/generate-stash-config.js`。
+3. 添加“修改响应”，内容使用 `files/set-stash-response-headers.js`。
+
+旧的“转换原生 Stash 配置”操作不再负责取节点；如果它只是旧流程遗留，应从这条 File 操作链移除。
+
+`generate-stash-config.js` 直接读取上一步已写入 `$content.proxies` 的节点，不调用 `produceArtifact()`，也没有 `COLLECTION_NAME`。组合订阅可以自由改名，只需在官方添加节点操作中重新选择即可。
+
+### 流量信息
+
+在 File 的“查询流量信息订阅链接”中填写组合订阅的生成链接。该请求会运行 `aggregate-subscription-usage.js` 并把 `subscription-userinfo` 带到 File 响应。
+
+响应转换器只做三件事：
 
 - 设置 `Content-Type: text/yaml; charset=utf-8`。
-- 设置下载文件名 `Stash-Sub-Store.yaml`。
-- 优先从当前请求上下文转发 `subscription-userinfo`。
-- 当前请求没有流量信息时，从本地组合订阅记录读取兼容性后备值。
+- 设置下载文件名 `Stash-SubStore.yaml`。
+- 验证并保留当前 File 已取得的 `subscription-userinfo`。
 
-Stash 会解析 `Subscription-Userinfo`，展示上传、下载、总流量和到期时间。
+它不再按组合订阅名称读取本地记录。未配置查询链接时会记录错误，但不会替换正文或状态。
 
-## 在 Sub-Store 中组装
+## 当前策略设计
 
-1. 将三个 `operator` 脚本分别导入或粘贴为 Sub-Store 脚本操作。
-2. 给需要处理的每个单订阅添加 `subscriptions/prepare-proxies.js`。
-3. 创建组合订阅，名称必须为 `Sub-Store`，并选择需要聚合的订阅或标签。
-4. 按顺序给组合订阅添加：
-   1. `collections/aggregate-subscription-usage.js`
-   2. `collections/normalize-proxy-names.js`
-5. 创建一个文件，以 `files/stash-base-config.yaml` 为基础内容。
-6. 将 `files/generate-stash-config.js` 配置为该文件的文件脚本。
-7. 将 `files/set-stash-response-headers.js` 配置为该文件的响应转换器。
-8. 先在 Sub-Store 中预览文件，确认无报错，再把文件 URL 作为远程配置导入 Stash。
+```text
+Default Proxy
+├─ TCP Fast              默认；同类 TCP 节点中按延迟选择
+├─ QUIC Fast             存在 HY2/TUIC 时创建
+├─ TCP Reliable          固定顺序故障转移
+├─ Regional Exit
+├─ Fixed Exit            存在固定节点时创建
+├─ IPv6                  存在 V6 节点时创建
+├─ Manual
+└─ DIRECT
 
-不同版本的 Sub-Store 前端可能使用略有差异的字段名称，但三个挂载层级不能混用：单订阅脚本、组合订阅脚本、文件脚本与响应转换器分别承担不同职责。
+Developer
+├─ TCP Reliable          默认；适合 Git、API、SSH、登录和长连接
+├─ TCP Fast
+├─ QUIC Fast
+├─ Regional Exit
+└─ Manual
 
-## 修改时必须保持的契约
+Developer Download
+├─ TCP Fast              默认；适合包、镜像层、Release、LFS
+├─ QUIC Fast
+├─ TCP Reliable
+├─ Regional Exit
+└─ Manual
 
-- 组合订阅名称 `Sub-Store` 同时硬编码在 `generate-stash-config.js` 和 `set-stash-response-headers.js` 中；重命名组合订阅时必须同步修改两处。
-- `stash-base-config.yaml` 的最后一条规则必须保持为 `MATCH,Default Proxy`。
-- 基础规则引用的策略组名称必须与生成器创建的名称一致。
-- 流量聚合脚本必须位于节点重命名脚本之前。
-- 响应转换器只处理响应头，不应重写已经验证完成的 YAML 正文。
-- 不要把真实订阅 URL、Token、UUID、密码、节点内容或生成后的私有配置提交到仓库。
+AI Stable
+├─ AI US                  该地区全部固定节点
+├─ AI TW
+├─ AI JP
+├─ AI 其他实际存在地区
+└─ AI Emergency          只有手动选择才会离开固定出口
+
+Regional Exit
+├─ HK
+├─ SG
+├─ JP
+├─ TW
+├─ US
+└─ 实际存在的其他地区
+```
+
+每个地区入口是 `select`：优先展示该地区的 `TCP Fast`、`QUIC Fast`，随后列出具体非固定 IPv4 节点。选择 `US` 后可以自动选美国节点，也可以手动钉住某一个节点。
+
+自动池限制：
+
+- `TCP Fast` / `TCP Reliable`：只接收 IPv4 VLESS + REALITY TCP 和 IPv4 SS-SP。
+- `QUIC Fast`：只接收 IPv4 HY2/Hysteria2/TUIC。
+- 固定 IP、IPv6、未知地区和普通 SS 不进入默认自动池。
+- 普通 SS 仍可出现在对应地区和 `Manual` 中。
+- TCP 与 QUIC 不做跨协议自动比较；延迟测试不能代表持续下载、丢包或 UDP 限速。
+
+`AI Stable` 只接受带 `F` 标记的节点，但不限制地区，也不以 IPv4/IPv6 作为准入条件。生成器会为每个实际存在固定节点的地区创建 `AI US`、`AI TW`、`AI JP`、`AI HK` 等二级 `select` 组；每组包含该地区的全部固定节点。`AI Stable` 的子组顺序为 US → TW → JP → 其他地区，因此缺少 US 时自动默认 TW，缺少前三者时仍会使用其他现有固定地区。相同地区内 IPv4 排在 IPv6 前面。普通 VLESS、SS-SP 和自动组不会冒充固定出口；完全没有固定节点时生成器才会报错。
+
+## 独立规则
+
+基础配置声明六个远程 provider：
+
+| Provider | 目标策略 | 内容 |
+| --- | --- | --- |
+| `ai` | `AI Stable` | OpenAI、Claude、Gemini、Cursor、Copilot 等身份敏感 AI 服务 |
+| `developer-download` | `Developer Download` | GitHub 内容、Docker、包管理器、模型与工具下载 |
+| `developer` | `Developer` | 代码托管、云控制台、开发平台、协作工具 |
+| `research` | `Default Proxy` | 论文、期刊、学术检索与科研工具 |
+| `proxy` | `Default Proxy` | 普通境外站点、社交、金融、公共 CDN |
+| `direct` | `DIRECT` | 中国大陆域名、国内厂商和常用开发镜像 |
+
+匹配顺序是：局域网/内网 → AI → 开发下载 → 开发交互 → 学术 → 普通代理 → 国内直连 → `GEOIP,CN` → `MATCH,Default Proxy`。
+
+规则文件使用低开销的 `behavior: domain`，并每 3600 秒后台检查更新。修改规则时只需编辑对应 `rules/*.yaml` 并推送；Stash 可等待后台更新或手动刷新规则集合，无需重新生成节点配置。
+
+规则 payload 示例：
+
+```yaml
+---
+payload:
+- "+.example.com"   # example.com 及其子域名
+- api.example.net    # 仅精确域名
+```
+
+基础配置保留 `DOMAIN,raw.githubusercontent.com,Developer Download` 作为首次下载这些 provider 的引导规则。
+
+## DNS 基线
+
+基础配置使用两个国内 DNS：
+
+```yaml
+dns:
+  default-nameserver:
+  - 223.5.5.5
+  - 119.29.29.29
+  nameserver:
+  - 223.5.5.5
+  - 119.29.29.29
+  nameserver-policy:
+    "+.internal": system
+    "+.intranet": system
+    "+.corp": system
+    "+.private": system
+  follow-rule: false
+```
+
+`follow-rule: false` 避免代理 DNS 递归，也保留国内 CDN 选路。公司内网后缀交给系统 DNS；如果实际企业后缀不同，应只在个人配置或 Stash Override 中补充，不要把私有域名提交到公共仓库。
+
+没有默认启用“拦截所有 UDP/443”的 QUIC 规则，因为还需要验证它不会影响现有 HY2/TUIC 与特定应用；可在完成实机测试后通过个人 Override 添加。
 
 ## 本地校验
-
-这些脚本由 Sub-Store 的嵌入式运行时执行，依赖 `$substore`、`$arguments`、`$options`、`$content`、`$res`、`flowUtils`、`ProxyUtils` 和 `produceArtifact` 等全局对象，因此本地 Node.js 只能做静态语法检查。
 
 ```bash
 node --check subscriptions/prepare-proxies.js
 node --check collections/aggregate-subscription-usage.js
 node --check collections/normalize-proxy-names.js
-node --input-type=module --check < files/generate-stash-config.js
+node --check files/generate-stash-config.js
 node --check files/set-stash-response-headers.js
-ruby -e 'require "yaml"; path = "files/stash-base-config.yaml"; YAML.safe_load(File.read(path), aliases: true, filename: path)'
+node tests/runtime-scripts.test.js
+ruby -e 'require "yaml"; Dir["files/*.yaml", "rules/*.yaml"].each { |path| YAML.safe_load(File.read(path), aliases: true, filename: path) }'
 ```
 
-发布前还应完成实际运行验证：
+JavaScript 由 Sub-Store 嵌入式环境执行。本地测试只模拟节点规范化、策略组生成和失败保护；`$substore`、`$options`、`$res`、`flowUtils`、`ProxyUtils` 等真实对象仍需在 Sub-Store 中验证。
 
-1. 组合订阅预览中的节点名全部符合约定格式且没有重名。
-2. 文件预览能生成非空的 `proxies` 和 `proxy-groups`。
-3. 文件 URL 的响应包含 YAML Content-Type、下载文件名和有效的 `subscription-userinfo`。
-4. Stash 能成功导入配置，策略组无空组且分流规则可用。
+## 发布前实机检查
+
+1. 组合订阅预览中的节点名符合规范，排序改变后同一端点名称不变。
+2. File 操作顺序为“官方添加节点 → 生成策略组 → 修改响应”。
+3. File 预览包含非空 `proxies`、`proxy-groups` 和六个 `rule-providers`。
+4. `AI Stable` 第一项是你确认过的固定出口，且不会自动跳到普通节点。
+5. File URL 包含 YAML Content-Type、下载文件名和有效 `subscription-userinfo`。
+6. Stash 能下载所有规则集合并加载配置；节点、策略组和引用均非空。
+7. 分别在家宽、蜂窝或常用公司网络测试 `TCP Fast`、`TCP Reliable`、`QUIC Fast` 的实际下载和长连接表现。
+8. 测试 GitHub HTTPS/SSH、Docker pull、常用包管理器与 AI 登录；GitHub SSH 22 不稳定时可按官方方法改用 `ssh.github.com:443`。
+
+未完成这些步骤时，只能声称本地静态与模拟测试通过，不能声称 Sub-Store/Stash 运行时验证通过。
+
+## 安全约束
+
+- 不提交真实订阅 URL、Token、UUID、密码或节点配置。
+- 不提交带凭据的 File/Share URL、日志或生成后的私有 YAML。
+- 私有 SSID、公司域名和内部 DNS 只放个人 Override。
+- 如果仓库被 fork 或改名，需要同步修改 `files/stash-base-config.yaml` 中六个 provider URL 和本文的基础配置 URL。
 
 ## 参考资料
 
 - [Sub-Store 官方仓库](https://github.com/sub-store-org/Sub-Store)
-- [Stash：快速开始](https://stash.wiki/get-started)
-- [Stash：配置样例](https://stash.wiki/configuration/example-config)
-- [Stash：策略组](https://stash.wiki/proxy-protocols/proxy-groups)
-- [Stash：服务提供商订阅与流量响应头](https://stash.wiki/features/service-provider-subscription)
+- [Stash 策略组](https://stash.wiki/proxy-protocols/proxy-groups)
+- [Stash 规则集合](https://stash.wiki/rules/rule-set)
+- [Stash DNS](https://stash.wiki/features/dns-server)
+- [Stash 高效配置建议](https://stash.wiki/faq/effective-stash)
+- [GitHub SSH over 443](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port)
+- [Docker Desktop 域名清单](https://docs.docker.com/desktop/setup/allow-list/)
