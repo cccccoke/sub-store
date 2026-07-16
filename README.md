@@ -2,7 +2,7 @@
 
 本仓库保存一组安装 Sub-Store 后自行维护的本地脚本，用来把多个原始代理订阅整理为一份可直接交给 Stash 使用的 YAML 配置。
 
-它不是 Sub-Store 或 Stash 的安装仓库，也不保存真实订阅地址、节点凭据或生成后的配置。仓库只维护“订阅处理 → 组合订阅处理 → Stash 文件生成与响应处理”这条流水线。
+它不是 Sub-Store 或 Stash 的安装仓库，也不保存真实订阅地址、节点凭据或生成后的私有配置。除不参与流水线的脱敏结构样例外，仓库只维护“订阅处理 → 组合订阅处理 → Stash 文件生成与响应处理”这条流水线。
 
 ## Sub-Store、Stash 与本仓库的关系
 
@@ -35,11 +35,13 @@ flowchart LR
 │   ├── aggregate-subscription-usage.js
 │   └── normalize-proxy-names.js
 ├── files/
+│   ├── example.yaml
 │   ├── generate-stash-config.js
 │   ├── set-stash-response-headers.js
 │   └── stash-base-config.yaml
 ├── AGENTS.md
-└── README.md
+├── README.md
+└── Stash-SubStore-MEMORY.md
 ```
 
 | 文件 | 在 Sub-Store 中的位置 | 作用 |
@@ -47,9 +49,11 @@ flowchart LR
 | `subscriptions/prepare-proxies.js` | 单个订阅的脚本操作 | 添加订阅来源前缀，并统一 ECN 与测速地址 |
 | `collections/aggregate-subscription-usage.js` | 组合订阅的脚本操作 | 汇总多个订阅的流量与到期信息，不修改节点 |
 | `collections/normalize-proxy-names.js` | 组合订阅的脚本操作 | 删除提示节点，并生成稳定、可解析的节点名称 |
+| `files/example.yaml` | 不挂载 | 使用无效占位节点的脱敏 YAML 结构参考，不参与流水线，也不作为当前生成器输出的金标准 |
 | `files/stash-base-config.yaml` | 文件的基础内容 | 提供 Stash 模式、DNS 基线和分流规则 |
 | `files/generate-stash-config.js` | 文件脚本 | 读取组合订阅，注入节点并生成、校验策略组 |
 | `files/set-stash-response-headers.js` | 修改响应 / Response Transformer | 设置 YAML 下载响应头并转发聚合流量信息 |
+| `Stash-SubStore-MEMORY.md` | 不挂载 | 记录维护不变量、旧名称映射和已注明日期的历史运行背景 |
 
 ## 各阶段行为
 
