@@ -125,18 +125,19 @@ US Fixed [ID:AI-US-PRIMARY]
 
 ### GitHub 远程地址
 
-仓库仍以 GitHub 为唯一源。中国大陆网络中的 Sub-Store 建议通过 jsDelivr
+仓库仍以 GitHub 为唯一源。中国大陆网络中的 Sub-Store 建议通过 Statically
 读取 GitHub 公共仓库文件，避免直接访问 `raw.githubusercontent.com` 失败。
 远程脚本地址不要追加 `#noCache`，否则每次预览都会跳过 Sub-Store 缓存。
+频繁变化的 `rules/*.yaml` 由基础配置通过 CDN 的 `main` 地址后台更新。
 
 | 用途 | GitHub CDN 地址 |
 | --- | --- |
-| 单订阅预处理 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/subscriptions/prepare-proxies.js` |
-| 组合订阅流量聚合 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/collections/aggregate-subscription-usage.js` |
-| 组合订阅节点规范化 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/collections/normalize-proxy-names.js` |
-| File 基础配置 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/stash-base-config.yaml` |
-| File 策略组生成器 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/generate-stash-config.js` |
-| File 响应转换器 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/set-stash-response-headers.js` |
+| 单订阅预处理 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/subscriptions/prepare-proxies.js` |
+| 组合订阅流量聚合 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/collections/aggregate-subscription-usage.js` |
+| 组合订阅节点规范化 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/collections/normalize-proxy-names.js` |
+| File 基础配置 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/stash-base-config.yaml` |
+| File 策略组生成器 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/generate-stash-config.js` |
+| File 响应转换器 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/set-stash-response-headers.js` |
 
 ### 内容设置
 
@@ -148,7 +149,7 @@ US Fixed [ID:AI-US-PRIMARY]
 - 远程地址：
 
 ```text
-https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/stash-base-config.yaml
+https://cdn.statically.io/gh/cccccoke/sub-store/main/files/stash-base-config.yaml
 ```
 
 不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。
@@ -247,7 +248,7 @@ Regional Exit
 
 匹配顺序是：局域网/内网 → AI → 开发下载 → 开发交互 → 学术 → 普通代理 → 国内直连 → `GEOIP,CN` → `MATCH,Default Proxy`。
 
-规则文件使用低开销的 `behavior: domain`，并每 3600 秒后台检查更新。六个 provider 也统一通过 jsDelivr 读取 GitHub；修改规则并推送后，Stash 可等待 CDN 与后台检查更新或手动刷新规则集合，无需重新生成节点配置。CDN 缓存会使规则变更晚于 GitHub 提交生效。
+规则文件使用低开销的 `behavior: domain`，并每 3600 秒后台检查更新。六个 provider 也统一通过 Statically 读取 GitHub；修改规则并推送后，Stash 可等待 CDN 与后台检查更新或手动刷新规则集合，无需重新生成节点配置。CDN 缓存会使规则变更晚于 GitHub 提交生效。
 
 规则 payload 示例：
 
@@ -258,7 +259,7 @@ payload:
 - api.example.net    # 仅精确域名
 ```
 
-基础配置保留 `DOMAIN-SUFFIX,jsdelivr.net,Developer Download` 作为首次下载这些 provider 的引导规则。
+基础配置保留 `DOMAIN-SUFFIX,statically.io,Developer Download` 作为首次下载这些 provider 的引导规则。
 
 ## DNS 基线
 

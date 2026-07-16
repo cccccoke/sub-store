@@ -21,37 +21,37 @@ rule-providers:
   ai:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/ai.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/ai.yaml
     path: "./rules/ai.yaml"
     interval: 3600
   developer:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/developer.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/developer.yaml
     path: "./rules/developer.yaml"
     interval: 3600
   developer-download:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/developer-download.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/developer-download.yaml
     path: "./rules/developer-download.yaml"
     interval: 3600
   research:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/research.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/research.yaml
     path: "./rules/research.yaml"
     interval: 3600
   proxy:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/proxy.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/proxy.yaml
     path: "./rules/proxy.yaml"
     interval: 3600
   direct:
     behavior: domain
     format: yaml
-    url: https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/rules/direct.yaml
+    url: https://cdn.statically.io/gh/cccccoke/sub-store/main/rules/direct.yaml
     path: "./rules/direct.yaml"
     interval: 3600
 rules:
@@ -81,7 +81,7 @@ rules:
 - DOMAIN-SUFFIX,invalid,DIRECT
 - DOMAIN-SUFFIX,localdomain,DIRECT
 - GEOIP,PRIVATE,DIRECT,no-resolve
-- DOMAIN-SUFFIX,jsdelivr.net,Developer Download
+- DOMAIN-SUFFIX,statically.io,Developer Download
 - RULE-SET,ai,AI Stable
 - RULE-SET,developer-download,Developer Download
 - RULE-SET,developer,Developer
