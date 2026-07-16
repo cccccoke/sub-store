@@ -247,7 +247,7 @@ Regional Exit
 
 匹配顺序是：局域网/内网 → AI → 开发下载 → 开发交互 → 学术 → 普通代理 → 国内直连 → `GEOIP,CN` → `MATCH,Default Proxy`。
 
-规则文件使用低开销的 `behavior: domain`，并每 3600 秒后台检查更新。修改规则时只需编辑对应 `rules/*.yaml` 并推送；Stash 可等待后台更新或手动刷新规则集合，无需重新生成节点配置。
+规则文件使用低开销的 `behavior: domain`，并每 3600 秒后台检查更新。六个 provider 也统一通过 jsDelivr 读取 GitHub；修改规则并推送后，Stash 可等待 CDN 与后台检查更新或手动刷新规则集合，无需重新生成节点配置。CDN 缓存会使规则变更晚于 GitHub 提交生效。
 
 规则 payload 示例：
 
@@ -258,7 +258,7 @@ payload:
 - api.example.net    # 仅精确域名
 ```
 
-基础配置保留 `DOMAIN,raw.githubusercontent.com,Developer Download` 作为首次下载这些 provider 的引导规则。
+基础配置保留 `DOMAIN-SUFFIX,jsdelivr.net,Developer Download` 作为首次下载这些 provider 的引导规则。
 
 ## DNS 基线
 

@@ -198,7 +198,7 @@ AUTOMATIC_REGIONS = HK, SG, JP, TW, US, KR
 
 ```text
 内网内联规则
-→ raw.githubusercontent.com 引导规则
+→ jsdelivr.net 引导规则
 → ai / AI Stable
 → developer-download / Developer Download
 → developer / Developer
@@ -226,7 +226,7 @@ payload:
 
 大量规则应继续使用 `domain`/`ipcidr` provider；没有必要时不要改为高开销 `classical`。
 
-当前 provider URL 固定指向 GitHub 公开仓库 `cccccoke/sub-store` 的 `main/rules/`。仓库 fork、改名或换分支时，需要同步修改六个 URL 与 README 中的基础配置 URL。
+当前 provider URL 通过 jsDelivr 指向 GitHub 公开仓库 `cccccoke/sub-store` 的 `main/rules/`。仓库 fork、改名或换分支时，需要同步修改六个 URL 与 README 中的基础配置 URL。规则推送后可能受 CDN 缓存影响，不保证与 GitHub 提交同时生效。
 
 ## 8. DNS 基线
 
@@ -349,7 +349,7 @@ MITCE:    17 HY2 + 10 TUIC v5
 9cf74eb92eb36201f626b67f70c113eae35f0ea2b9843ddb9260d2184d99e08d  collections/normalize-proxy-names.js
 e40c10d388f36a6087975de94c7aa6ff0115862bc44249dfaae9c96d6fdc88dc  files/generate-stash-config.js
 f03c6d504f046a4e08e545a0a66f00f759fbbbb3400ac18dfec3f1ac6d258e9c  files/set-stash-response-headers.js
-938e18115d8a68276430c4bbb2c2280d13ec3675af0818c2aff4a0069748fc42  files/stash-base-config.yaml
+6000acc59b77dfa2db7cf5abfc13890a0b2cca42cb5dadd926e1867c76869865  files/stash-base-config.yaml
 15fd6ed2fdcdc7137dfbcc104c07a736c8e85aec219921a5841e476722c54c80  rules/ai.yaml
 fc1ded0d48571e2566721160f3ee7b70d64c8f5b8101d53872de1b050ffb7c2c  rules/developer-download.yaml
 bbb60b4c0b64a15972f44da4974c4702893cd80cf70ba23ad79886037d460fd7  rules/developer.yaml
