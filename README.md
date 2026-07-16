@@ -107,6 +107,10 @@ MITCE-TW-HY2-V6-3456789012
 - `V6`：名称明确包含 IPv6/V6。
 - `NN`：确定性数字标识。
 
+地区识别优先使用节点名中的明确中文/英文地区和地区码，再回退到
+Sub-Store 推断与国旗。这样即使机场使用 `🇨🇳 TW台湾` 或
+`🇲🇨 MC印度尼西亚` 这类冲突标记，仍分别识别为 `TW` 与 `ID`。
+
 身份敏感节点建议在 Sub-Store 本地名称中增加用户自有标记：
 
 ```text
@@ -121,16 +125,18 @@ US Fixed [ID:AI-US-PRIMARY]
 
 ### GitHub 远程地址
 
-在 Sub-Store 的脚本操作中选择远程脚本时，按用途使用以下 GitHub Raw 地址：
+仓库仍以 GitHub 为唯一源。中国大陆网络中的 Sub-Store 建议通过 jsDelivr
+读取 GitHub 公共仓库文件，避免直接访问 `raw.githubusercontent.com` 失败。
+远程脚本地址不要追加 `#noCache`，否则每次预览都会跳过 Sub-Store 缓存。
 
-| 用途 | GitHub Raw 地址 |
+| 用途 | GitHub CDN 地址 |
 | --- | --- |
-| 单订阅预处理 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/subscriptions/prepare-proxies.js` |
-| 组合订阅流量聚合 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/collections/aggregate-subscription-usage.js` |
-| 组合订阅节点规范化 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/collections/normalize-proxy-names.js` |
-| File 基础配置 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml` |
-| File 策略组生成器 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/generate-stash-config.js` |
-| File 响应转换器 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/set-stash-response-headers.js` |
+| 单订阅预处理 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/subscriptions/prepare-proxies.js` |
+| 组合订阅流量聚合 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/collections/aggregate-subscription-usage.js` |
+| 组合订阅节点规范化 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/collections/normalize-proxy-names.js` |
+| File 基础配置 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/stash-base-config.yaml` |
+| File 策略组生成器 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/generate-stash-config.js` |
+| File 响应转换器 | `https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/set-stash-response-headers.js` |
 
 ### 内容设置
 
@@ -142,7 +148,7 @@ US Fixed [ID:AI-US-PRIMARY]
 - 远程地址：
 
 ```text
-https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
+https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/stash-base-config.yaml
 ```
 
 不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。

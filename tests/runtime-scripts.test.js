@@ -83,6 +83,79 @@ async function testStableNormalization() {
   );
 }
 
+async function testProviderNameNormalization() {
+  const operator = loadOperator('collections/normalize-proxy-names.js', {
+    ProxyUtils: {
+      // Deliberately misleading fallback: explicit text must win.
+      getISO() {
+        return 'CN';
+      },
+    },
+  });
+
+  const proxies = [
+    {
+      name: 'DingDang-无法使用请更新订阅，或者登录网站重新复制订阅',
+      type: 'vless',
+      server: 'notice.example.com',
+      port: 443,
+      _subDisplayName: 'DingDang',
+    },
+    {
+      name: 'DingDang-距离下次重置剩余：29 天',
+      type: 'vless',
+      server: 'reset.example.com',
+      port: 443,
+      _subDisplayName: 'DingDang',
+    },
+    {
+      name: 'DingDang-VIP1-01-香港',
+      type: 'vless',
+      server: 'hk.example.com',
+      port: 443,
+      _subDisplayName: 'DingDang',
+    },
+    {
+      name: 'KTM-🇨🇳 TW台湾-1',
+      type: 'ss',
+      server: 'tw.example.com',
+      port: 443,
+      _subDisplayName: 'KTM',
+    },
+    {
+      name: 'KTM-🇲🇨 MC印度尼西亚-1',
+      type: 'ss',
+      server: 'id.example.com',
+      port: 443,
+      _subDisplayName: 'KTM',
+    },
+    {
+      name: 'Mitce-US1-HY2',
+      type: 'hysteria2',
+      server: 'us.example.com',
+      port: 443,
+      _subDisplayName: 'Mitce',
+    },
+    {
+      name: 'GloDOS-JP-Dedicated-P1-1',
+      type: 'ss',
+      server: 'jp-fixed.example.com',
+      port: 443,
+      _subDisplayName: 'GloDOS',
+    },
+  ];
+
+  const output = await operator(clone(proxies), 'Stash', {});
+  assert.strictEqual(output.length, 5, 'notice nodes must be removed');
+
+  const names = output.map(proxy => proxy.name);
+  assert(names.some(name => /^DINGDANG-HK-VLESS-\d{10}$/.test(name)));
+  assert(names.some(name => /^KTM-TW-SS-\d{10}$/.test(name)));
+  assert(names.some(name => /^KTM-ID-SS-\d{10}$/.test(name)));
+  assert(names.some(name => /^MITCE-US-HY2-\d{10}$/.test(name)));
+  assert(names.some(name => /^GLODOS-JP-SS-F-\d{10}$/.test(name)));
+}
+
 async function runGenerator(policy) {
   const source = fs.readFileSync(
     path.join(ROOT, 'files/generate-stash-config.js'),
@@ -348,6 +421,7 @@ function testResponseTransformer() {
 
 (async () => {
   await testStableNormalization();
+  await testProviderNameNormalization();
   await testGeneratedGroups();
   testResponseTransformer();
   process.stdout.write('runtime script tests passed\n');

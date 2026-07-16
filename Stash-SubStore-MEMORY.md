@@ -63,8 +63,12 @@ rules/*.yaml
 类型 = mihomo 配置
 来源 = 远程
 模式 = 作为 mihomo 配置
-URL = https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
+URL = https://cdn.jsdelivr.net/gh/cccccoke/sub-store@main/files/stash-base-config.yaml
 ```
+
+仓库仍只使用 GitHub 远端；中国大陆网络中的 Sub-Store 通过 jsDelivr
+读取 GitHub 公共文件。远程脚本 URL 不追加 `#noCache`，避免每次预览都
+绕过 Sub-Store 的本地资源缓存并直接请求上游。
 
 操作顺序：
 
@@ -88,6 +92,11 @@ SUBSCRIPTION-REGION-PROTOCOL-[F|SP]-[V6]-NN
 - `NN`：10 位确定性数字 ID，而不是按输入顺序递增的序号。
 
 默认 ID 基于订阅、地区、协议、线路标记和节点端点。订阅只调整排序时，同一端点名称保持不变。
+
+地区识别优先级为：节点名中的明确中文/英文地区或地区码 → 显式节点字段
+→ Sub-Store `ProxyUtils.getISO()` → 国旗。该顺序用于纠正
+`🇨🇳 TW台湾`、`🇲🇨 MC印度尼西亚` 一类文字与国旗冲突的名称。
+“无法使用/更新订阅/重新复制订阅/距离下次重置”等通知节点必须删除。
 
 身份敏感节点可使用本地名称标记：
 
@@ -337,7 +346,7 @@ MITCE:    17 HY2 + 10 TUIC v5
 ```text
 5b06db685f3c6a2a3454761c19837e3befdad855a1d440642bbdea2cb1d05af2  subscriptions/prepare-proxies.js
 6d53940f3bbc560d32a48e70c673ffd4964d57585d33b5f739d77b6ebfd1a962  collections/aggregate-subscription-usage.js
-caa9cdb41e2a5ad667f929cab22410a8dcac03d1faeaf601d7e042b4d6526ac6  collections/normalize-proxy-names.js
+9cf74eb92eb36201f626b67f70c113eae35f0ea2b9843ddb9260d2184d99e08d  collections/normalize-proxy-names.js
 e40c10d388f36a6087975de94c7aa6ff0115862bc44249dfaae9c96d6fdc88dc  files/generate-stash-config.js
 f03c6d504f046a4e08e545a0a66f00f759fbbbb3400ac18dfec3f1ac6d258e9c  files/set-stash-response-headers.js
 938e18115d8a68276430c4bbb2c2280d13ec3675af0818c2aff4a0069748fc42  files/stash-base-config.yaml
@@ -347,7 +356,7 @@ bbb60b4c0b64a15972f44da4974c4702893cd80cf70ba23ad79886037d460fd7  rules/develope
 6c74c1d10f0ef580e5c48d06099273723a7f49da85f42b4073484d1c56182ae1  rules/direct.yaml
 45bae094c8ec15f458cc2c76b1e896fd67ff226537ca5fd61aca7e08ac23f2e9  rules/proxy.yaml
 439e5f142a1cb6457adef6464d651d7e068ab9dbdaeca85f128b8a659b4a7ee1  rules/research.yaml
-d0fd79215c65e2ec19d8e88a9c0d6fb3220930c417703a6c685cb9bfa28372f9  tests/runtime-scripts.test.js
+a5ad408956991055c42653da03d9e512a3db369b741cffa7a68d424a7d2992cb  tests/runtime-scripts.test.js
 ```
 
 修改以上文件后，应重新生成本节哈希并更新日期。
