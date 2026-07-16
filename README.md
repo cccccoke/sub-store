@@ -129,7 +129,7 @@ US Fixed [ID:AI-US-PRIMARY]
 - 远程地址：
 
 ```text
-https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
+https://gitee.com/wioyber/sub-store/raw/main/files/stash-base-config.yaml
 ```
 
 不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。
