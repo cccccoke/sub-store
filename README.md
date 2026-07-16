@@ -119,6 +119,19 @@ US Fixed [ID:AI-US-PRIMARY]
 
 ## 在 Sub-Store 中组装 File
 
+### GitHub 远程地址
+
+在 Sub-Store 的脚本操作中选择远程脚本时，按用途使用以下 GitHub Raw 地址：
+
+| 用途 | GitHub Raw 地址 |
+| --- | --- |
+| 单订阅预处理 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/subscriptions/prepare-proxies.js` |
+| 组合订阅流量聚合 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/collections/aggregate-subscription-usage.js` |
+| 组合订阅节点规范化 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/collections/normalize-proxy-names.js` |
+| File 基础配置 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml` |
+| File 策略组生成器 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/generate-stash-config.js` |
+| File 响应转换器 | `https://raw.githubusercontent.com/cccccoke/sub-store/main/files/set-stash-response-headers.js` |
+
 ### 内容设置
 
 推荐选择：
@@ -129,7 +142,7 @@ US Fixed [ID:AI-US-PRIMARY]
 - 远程地址：
 
 ```text
-https://gitee.com/wioyber/sub-store/raw/main/files/stash-base-config.yaml
+https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
 ```
 
 不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。
@@ -139,8 +152,8 @@ https://gitee.com/wioyber/sub-store/raw/main/files/stash-base-config.yaml
 1. 添加官方操作“从订阅添加节点”。
    - 选择已经执行完聚合和规范化脚本的组合订阅。
    - 使用替换模式，避免基础模板或重复执行残留旧节点。
-2. 添加“脚本操作”，内容使用 `files/generate-stash-config.js`。
-3. 添加“修改响应”，内容使用 `files/set-stash-response-headers.js`。
+2. 添加“脚本操作”，使用上表中的 File 策略组生成器地址。
+3. 添加“修改响应”，使用上表中的 File 响应转换器地址。
 
 旧的“转换原生 Stash 配置”操作不再负责取节点；如果它只是旧流程遗留，应从这条 File 操作链移除。
 

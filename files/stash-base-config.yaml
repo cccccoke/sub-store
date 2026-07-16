@@ -21,37 +21,37 @@ rule-providers:
   ai:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/ai.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/ai.yaml
     path: "./rules/ai.yaml"
     interval: 3600
   developer:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/developer.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/developer.yaml
     path: "./rules/developer.yaml"
     interval: 3600
   developer-download:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/developer-download.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/developer-download.yaml
     path: "./rules/developer-download.yaml"
     interval: 3600
   research:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/research.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/research.yaml
     path: "./rules/research.yaml"
     interval: 3600
   proxy:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/proxy.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/proxy.yaml
     path: "./rules/proxy.yaml"
     interval: 3600
   direct:
     behavior: domain
     format: yaml
-    url: https://gitee.com/wioyber/sub-store/raw/main/rules/direct.yaml
+    url: https://raw.githubusercontent.com/cccccoke/sub-store/main/rules/direct.yaml
     path: "./rules/direct.yaml"
     interval: 3600
 rules:

@@ -63,7 +63,7 @@ rules/*.yaml
 类型 = mihomo 配置
 来源 = 远程
 模式 = 作为 mihomo 配置
-URL = https://gitee.com/wioyber/sub-store/raw/main/files/stash-base-config.yaml
+URL = https://raw.githubusercontent.com/cccccoke/sub-store/main/files/stash-base-config.yaml
 ```
 
 操作顺序：
@@ -217,7 +217,7 @@ payload:
 
 大量规则应继续使用 `domain`/`ipcidr` provider；没有必要时不要改为高开销 `classical`。
 
-当前 provider URL 固定指向 Gitee 公开仓库 `wioyber/sub-store` 的 `main/rules/`。仓库 fork、改名或换分支时，需要同步修改六个 URL 与 README 中的基础配置 URL。
+当前 provider URL 固定指向 GitHub 公开仓库 `cccccoke/sub-store` 的 `main/rules/`。仓库 fork、改名或换分支时，需要同步修改六个 URL 与 README 中的基础配置 URL。
 
 ## 8. DNS 基线
 
@@ -340,7 +340,7 @@ MITCE:    17 HY2 + 10 TUIC v5
 caa9cdb41e2a5ad667f929cab22410a8dcac03d1faeaf601d7e042b4d6526ac6  collections/normalize-proxy-names.js
 e40c10d388f36a6087975de94c7aa6ff0115862bc44249dfaae9c96d6fdc88dc  files/generate-stash-config.js
 f03c6d504f046a4e08e545a0a66f00f759fbbbb3400ac18dfec3f1ac6d258e9c  files/set-stash-response-headers.js
-7ae9a9ff00c28127283844eb90ca891c66670cfa7518e89117f38f1c27a914f2  files/stash-base-config.yaml
+938e18115d8a68276430c4bbb2c2280d13ec3675af0818c2aff4a0069748fc42  files/stash-base-config.yaml
 15fd6ed2fdcdc7137dfbcc104c07a736c8e85aec219921a5841e476722c54c80  rules/ai.yaml
 fc1ded0d48571e2566721160f3ee7b70d64c8f5b8101d53872de1b050ffb7c2c  rules/developer-download.yaml
 bbb60b4c0b64a15972f44da4974c4702893cd80cf70ba23ad79886037d460fd7  rules/developer.yaml
