@@ -128,16 +128,18 @@ US Fixed [ID:AI-US-PRIMARY]
 仓库仍以 GitHub 为唯一源。中国大陆网络中的 Sub-Store 建议通过 Statically
 读取 GitHub 公共仓库文件，避免直接访问 `raw.githubusercontent.com` 失败。
 远程脚本地址不要追加 `#noCache`，否则每次预览都会跳过 Sub-Store 缓存。
-频繁变化的 `rules/*.yaml` 由基础配置通过 CDN 的 `main` 地址后台更新。
+脚本和基础配置固定到已验证提交 `6f9575a`，避免分支缓存短期返回旧文件；
+需要升级脚本时再统一更换这个版本标识。频繁变化的 `rules/*.yaml` 由基础
+配置通过 CDN 的 `main` 地址后台更新。
 
 | 用途 | GitHub CDN 地址 |
 | --- | --- |
-| 单订阅预处理 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/subscriptions/prepare-proxies.js` |
-| 组合订阅流量聚合 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/collections/aggregate-subscription-usage.js` |
-| 组合订阅节点规范化 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/collections/normalize-proxy-names.js` |
-| File 基础配置 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/stash-base-config.yaml` |
-| File 策略组生成器 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/generate-stash-config.js` |
-| File 响应转换器 | `https://cdn.statically.io/gh/cccccoke/sub-store/main/files/set-stash-response-headers.js` |
+| 单订阅预处理 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/subscriptions/prepare-proxies.js` |
+| 组合订阅流量聚合 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/collections/aggregate-subscription-usage.js` |
+| 组合订阅节点规范化 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/collections/normalize-proxy-names.js` |
+| File 基础配置 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/files/stash-base-config.yaml` |
+| File 策略组生成器 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/files/generate-stash-config.js` |
+| File 响应转换器 | `https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/files/set-stash-response-headers.js` |
 
 ### 内容设置
 
@@ -149,7 +151,7 @@ US Fixed [ID:AI-US-PRIMARY]
 - 远程地址：
 
 ```text
-https://cdn.statically.io/gh/cccccoke/sub-store/main/files/stash-base-config.yaml
+https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/files/stash-base-config.yaml
 ```
 
 不要选择“转换为 mihomo 节点”，因为这里需要保留完整基础配置，而不是只输出节点列表。

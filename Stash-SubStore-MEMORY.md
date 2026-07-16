@@ -63,13 +63,13 @@ rules/*.yaml
 类型 = mihomo 配置
 来源 = 远程
 模式 = 作为 mihomo 配置
-URL = https://cdn.statically.io/gh/cccccoke/sub-store/main/files/stash-base-config.yaml
+URL = https://cdn.statically.io/gh/cccccoke/sub-store/6f9575a/files/stash-base-config.yaml
 ```
 
 仓库仍只使用 GitHub 远端；中国大陆网络中的 Sub-Store 通过 Statically
 读取 GitHub 公共文件。远程脚本 URL 不追加 `#noCache`，避免每次预览都
-绕过 Sub-Store 的本地资源缓存并直接请求上游。六个频繁更新的规则
-provider 通过 CDN `main` 地址更新。
+绕过 Sub-Store 的本地资源缓存并直接请求上游。脚本和基础配置固定到
+提交 `6f9575a`；六个频繁更新的规则 provider 通过 CDN `main` 地址更新。
 
 操作顺序：
 
